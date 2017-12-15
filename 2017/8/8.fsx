@@ -1,3 +1,4 @@
+open System
 open System.IO
 open System.Collections.Generic
 
@@ -41,6 +42,7 @@ let instructions =
     |> Seq.map ((fun l -> l.Split ' ') >> parseLine)
     |> Seq.toList
 
+let mutable high = Int32.MinValue
 for instr in instructions do
     if instr.Condition() then
         let v = registers.[instr.DestRegister]
@@ -49,7 +51,9 @@ for instr in instructions do
             | Inc x -> v + x 
             | Dec x -> v - x
         registers.[instr.DestRegister] <- result
+        high <- Math.Max(result, high)
 
 let max = registers.Values |> Seq.max
 printfn "Part 1 = %d" max
+printfn "Part 2 = %d" high
 
