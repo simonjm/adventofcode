@@ -4,10 +4,7 @@ open System.Collections.Generic
 
 type Claim = {
     ID: int
-    XCoord: int
-    YCoord: int
-    Width: int
-    Height: int
+    Coords: (int * int) list
 }
 
 let regex = Regex "^#(\d+) @ (\d+),(\d+): (\d+)x(\d+)"
@@ -15,23 +12,27 @@ let regex = Regex "^#(\d+) @ (\d+),(\d+): (\d+)x(\d+)"
 let parseLine (line:string) = 
     let matches = regex.Match line
     if not matches.Success then failwithf "Regex failed on '%s'" line
+    let xCoord = int(matches.Groups.[2].Value)
+    let yCoord = int(matches.Groups.[3].Value)
+    let width = int(matches.Groups.[4].Value)
+    let height = int(matches.Groups.[5].Value)
+    let coords = [
+        for y = yCoord + 1 to yCoord + height do
+            for x = xCoord + 1 to xCoord + width do
+                yield (x, y)
+    ]
     {
         ID = int(matches.Groups.[1].Value);
-        XCoord = int(matches.Groups.[2].Value);
-        YCoord = int(matches.Groups.[3].Value);
-        Width = int(matches.Groups.[4].Value);
-        Height = int(matches.Groups.[5].Value);
+        Coords = coords;
     }
 
 let createMap claims =
     let coords = Dictionary<(int * int), int>()
     for claim in claims do
-        for y = claim.YCoord + 1 to claim.YCoord + claim.Height do
-            for x = claim.XCoord + 1 to claim.XCoord + claim.Width do
-                let point = (x, y)
-                let found, count = coords.TryGetValue point
-                if found then coords.[point] <- count + 1
-                else coords.[point] <- 1
+        for point in claim.Coords do
+            match coords.TryGetValue point with
+            | (true, count) -> coords.[point] <- count + 1
+            | (false, _) -> coords.[point] <- 1
     coords
 
 let debugMap (coords:Dictionary<int *int, int>) = 
@@ -46,16 +47,28 @@ let debugMap (coords:Dictionary<int *int, int>) =
             else row.Add "."
         writer.WriteLine(String.concat " " row)
 
+let claims = 
+    File.ReadLines "input.txt"
+    |> Seq.map parseLine
+    |> Seq.toList
+
+let claimMap = createMap claims
+// debugMap claimMap
+
 let part1() =
-    let map =
-        File.ReadLines "input.txt"
-        |> Seq.map parseLine
-        |> createMap
-    // debugMap map
-    map
+    claimMap
     |> Seq.filter (fun kv -> kv.Value >= 2)
     |> Seq.length
 
+let part2() =
+    let noOverlap =
+        claims
+        |> Seq.find (fun claim -> 
+            claim.Coords |> Seq.forall (fun point -> claimMap.[point] = 1)
+        )
+    noOverlap.ID
+
 part1() |> printfn "Part 1 = %d"
+part2() |> printfn "Part 2 = %d"
 
 
