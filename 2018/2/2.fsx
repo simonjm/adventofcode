@@ -40,4 +40,31 @@ let part1() =
         ) (0, 0)
     three * two 
 
+let findMatch (word1:string) (word2:string) =
+    let getChars = Seq.mapi (fun i c -> (i, c))
+    let chars1 = getChars word1
+    let chars2 = getChars word2
+    let results =
+        Seq.zip chars1 chars2
+        |> Seq.filter (fun ((_, c1), (_, c2)) -> c1 <> c2)
+        |> Seq.map (fst >> fst)
+        |> Seq.toList
+    
+    match results with
+    | [i] -> Some(word1.Remove(i, 1))
+    | _ -> None
+
+let matchesSeq() = seq {
+    let words = lines |> Seq.toArray
+    for i = 0 to words.Length - 1 do
+        for j = 0 to words.Length - 1 do
+            if i = j then yield None
+            else 
+                yield findMatch words.[i] words.[j]
+}
+
+let part2() =
+    matchesSeq() |> Seq.pick id
+
 part1() |> printfn "Part 1 = %d"
+part2() |> printfn "Part 2 = %s"
