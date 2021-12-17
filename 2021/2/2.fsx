@@ -28,7 +28,17 @@ let part1() =
         ) (0, 0)
     x * y
     
-// let part2() =
+let part2() =
+    let (x, y, _) =
+        lines
+        |> Seq.fold (fun (x, y, aim) cmd ->
+            match cmd with
+            | Forward num -> (x + num, y + (aim * num), aim)
+            | Down num -> (x, y, aim + num)
+            | Up num -> (x, y, aim - num)
+        ) (0, 0, 0)
+    x * y
+    
 
 printfn "Part 1 = %d" <| part1()
-// printfn "Part 2 = %d" <| part2()
+printfn "Part 2 = %d" <| part2()
